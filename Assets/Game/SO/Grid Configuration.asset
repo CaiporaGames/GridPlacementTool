@@ -13,8 +13,12 @@ MonoBehaviour:
   m_Name: Grid Configuration
   m_EditorClassIdentifier: 
   prefabs:
+  - {fileID: 1485344814862187683, guid: fd3e7278d157a8b4bbcc550ccc7196fe, type: 3}
   - {fileID: 2953917503087334603, guid: 171d3073b1e93db41846291a86224eeb, type: 3}
+  - {fileID: 5436699335196124935, guid: d98d748c90504194688ae6f5c64a2175, type: 3}
+  - {fileID: 2960539394364825176, guid: dab580081b4447d4b8a475193aa70fa4, type: 3}
   cellSize: 1
   RandomYRotation: 1
   ScaleMin: 1
   ScaleMax: 1
+  placementYOffset: 0.5

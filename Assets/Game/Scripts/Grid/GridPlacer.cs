@@ -1,5 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 [ExecuteAlways]
 public class GridPlacer : MonoBehaviour
@@ -10,18 +13,16 @@ public class GridPlacer : MonoBehaviour
     [SerializeField] private bool showGrid = true;
     public bool ShowGrid => showGrid;
 
-
     private Dictionary<Vector3Int, GameObject> placedObjects = new();
     private GameObject prefab;
+
     public bool HasObjectAt(Vector3Int cell)
     {
         return placedObjects.ContainsKey(cell);
     }
 
-
     public void Place(Vector3 worldPos)
     {
-
         if (config == null)
         {
             Debug.LogError("Config is null! Make sure SO is assigned.");
@@ -36,7 +37,12 @@ public class GridPlacer : MonoBehaviour
             return;
         }
 
-        prefab = config.GetRandomPrefab();
+#if UNITY_EDITOR
+        // Only access GridPlacerEditorState in editor
+        prefab = config.GetSelectedPrefab();
+#else
+        prefab = config.GetRandomPrefab(); // fallback for runtime safety
+#endif
 
         if (!prefab)
         {
@@ -65,6 +71,41 @@ public class GridPlacer : MonoBehaviour
         placedObjects[cell] = go;
     }
 
+#if UNITY_EDITOR
+    private GameObject GetSelectedPrefabInEditor()
+    {
+        // Try to get the selected prefab from GridPlacerEditorState
+        // This will work if GridPlacerEditorState exists, otherwise fall back to random
+        try
+        {
+            var editorStateType = System.Type.GetType("GridPlacerEditorState");
+        Debug.Log("000000000");
+
+            if (editorStateType != null)
+            {
+        Debug.Log("11111");
+
+                var getSelectedPrefabMethod = editorStateType.GetMethod("GetSelectedPrefab",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+
+                if (getSelectedPrefabMethod != null)
+                {
+        Debug.Log("000000000");
+
+                    return (GameObject)getSelectedPrefabMethod.Invoke(null, new object[] { config });
+                }
+            }
+        }
+        catch (System.Exception)
+        {
+            // If  or fails, fall back to random
+            Debug.Log($"GridPlacerEditorState doesn't exist!");
+        }
+        // Fallback to random selection
+        return config.GetRandomPrefab();
+    }
+#endif
+
     public Vector3Int GetCellFromWorld(Vector3 worldPos)
     {
         return Vector3Int.RoundToInt(worldPos / config.cellSize);
@@ -74,7 +115,6 @@ public class GridPlacer : MonoBehaviour
     {
         return (Vector3)cell * config.cellSize + Vector3.up * config.placementYOffset;
     }
-
 
     public void Erase(Vector3 worldPos)
     {
@@ -100,8 +140,7 @@ public class GridPlacer : MonoBehaviour
         return (Vector3)cell * config.cellSize;
     }
 
-    
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
     private GameObject _ghostInstance;
 
     public void ShowGhostPreview(Vector3Int cell)
@@ -137,11 +176,10 @@ public class GridPlacer : MonoBehaviour
 
     private float GetPrefabHeight(GameObject prefab)
     {
-    #if UNITY_EDITOR
         Renderer renderer = prefab.GetComponentInChildren<Renderer>();
         if (renderer != null)
             return renderer.bounds.size.y;
-    #endif
+        
         return 1f; // fallback if no renderer
     }
 
@@ -160,7 +198,5 @@ public class GridPlacer : MonoBehaviour
             collider.enabled = false;
         }
     }
-    #endif
-    
-
+#endif
 }
