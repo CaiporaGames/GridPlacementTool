@@ -27,6 +27,35 @@ public class GridPlacerEditor : Editor
             foreach (Transform child in _placer.transform)
                 DestroyImmediate(child.gameObject);
         }
+
+         EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Show / Hide Grid", EditorStyles.boldLabel);
+
+        // Show grid toggle button
+        bool newShowGrid = GUILayout.Toggle(_placer.ShowGrid, _placer.ShowGrid ? "Hide Grid" : "Show Grid", "Button");
+        if (newShowGrid != _placer.ShowGrid)
+        {
+            Undo.RecordObject(_placer, "Toggle Grid Preview");
+            typeof(GridPlacer).GetField("showGrid", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .SetValue(_placer, newShowGrid);
+            EditorUtility.SetDirty(_placer);
+        }
+
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Save / Load", EditorStyles.boldLabel);
+
+        if (GUILayout.Button("Save Grid"))
+        {
+            var saveService = new BinarySaveService();
+            _placer.SaveAsync(saveService, SaveType.GridPlacer);
+        }
+
+        if (GUILayout.Button("Load Grid"))
+        {
+            var saveService = new BinarySaveService();
+            _placer.LoadAsync(saveService, SaveType.GridPlacer);
+        }
     }
 
     private void OnSceneGUI()
@@ -75,20 +104,6 @@ public class GridPlacerEditor : Editor
             }
 
         }
-
-        EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Editor Tools", EditorStyles.boldLabel);
-
-        // Show grid toggle button
-        bool newShowGrid = GUILayout.Toggle(_placer.ShowGrid, _placer.ShowGrid ? "Hide Grid" : "Show Grid", "Button");
-        if (newShowGrid != _placer.ShowGrid)
-        {
-            Undo.RecordObject(_placer, "Toggle Grid Preview");
-            typeof(GridPlacer).GetField("showGrid", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                .SetValue(_placer, newShowGrid);
-            EditorUtility.SetDirty(_placer);
-        }
-
     }
 
     private void DrawGrid(Vector3Int centerCell)

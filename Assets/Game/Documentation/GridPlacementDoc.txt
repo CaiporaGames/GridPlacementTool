@@ -1,0 +1,19 @@
+This tool is used to set random GO prefabs over a surface that have a collider. It will set it random rotation too.
+You can expand the tool to make it have another behaviors in the future.
+
++ First Setup:
+
+- Add the GridPlacer script in a GO.
+- Create a SO and add the gameobjects prefabs you want to place.
+- Add the SO into the GridPlacer script.
+
++ How to use:
+
+- Select the GO with the GridPlacer script.
+- In the editor will show a button to clear all the prefabs in the scene.
+- Another button you can change to place or remove a specific GO prefab.
+
++ More control over selection (Tool Grid Placer):
+
+- If you want to select which prefab you need or if they should be random, you go to the tab: tools > grid placer > prefab pallete.
+- You can set it to random select an prefab when you are placing GO prefabs, or you can select the specific GO prefab.

@@ -3,8 +3,10 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Scriptable Objects / Grid Placer/ Config", fileName = "Grid Configuration")]
 public class SOGridPlacerConfig : ScriptableObject
 {
+    public string layerName = "default"; // Add this at the top
+
     public bool useRandom = true;
-    public int selectedIndex = -1;
+    public int selectedIndex = 0;
     public GameObject[] prefabs;
     public float cellSize = 1f;
     public bool RandomYRotation = true;

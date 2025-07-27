@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -71,41 +73,6 @@ public class GridPlacer : MonoBehaviour
         placedObjects[cell] = go;
     }
 
-#if UNITY_EDITOR
-    private GameObject GetSelectedPrefabInEditor()
-    {
-        // Try to get the selected prefab from GridPlacerEditorState
-        // This will work if GridPlacerEditorState exists, otherwise fall back to random
-        try
-        {
-            var editorStateType = System.Type.GetType("GridPlacerEditorState");
-        Debug.Log("000000000");
-
-            if (editorStateType != null)
-            {
-        Debug.Log("11111");
-
-                var getSelectedPrefabMethod = editorStateType.GetMethod("GetSelectedPrefab",
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-
-                if (getSelectedPrefabMethod != null)
-                {
-        Debug.Log("000000000");
-
-                    return (GameObject)getSelectedPrefabMethod.Invoke(null, new object[] { config });
-                }
-            }
-        }
-        catch (System.Exception)
-        {
-            // If  or fails, fall back to random
-            Debug.Log($"GridPlacerEditorState doesn't exist!");
-        }
-        // Fallback to random selection
-        return config.GetRandomPrefab();
-    }
-#endif
-
     public Vector3Int GetCellFromWorld(Vector3 worldPos)
     {
         return Vector3Int.RoundToInt(worldPos / config.cellSize);
@@ -147,7 +114,7 @@ public class GridPlacer : MonoBehaviour
     {
         if (config.prefabs == null || config.prefabs.Length == 0) return;
 
-        var prefab = config.prefabs[0]; // You can also call GetRandomPrefab() here
+        var prefab = config.prefabs[config.selectedIndex]; // You can also call GetRandomPrefab() here
         if (!prefab) return;
 
         // Create the ghost if it doesn't exist
@@ -179,7 +146,7 @@ public class GridPlacer : MonoBehaviour
         Renderer renderer = prefab.GetComponentInChildren<Renderer>();
         if (renderer != null)
             return renderer.bounds.size.y;
-        
+
         return 1f; // fallback if no renderer
     }
 
@@ -199,4 +166,64 @@ public class GridPlacer : MonoBehaviour
         }
     }
 #endif
+
+    public async UniTask SaveAsync(ISaveService saveService, SaveType key)
+    {
+        var data = new GridLayeredSaveData();
+        var saveData = new GridPlacerSaveData();
+
+        foreach (var kvp in placedObjects)
+        {
+            var obj = kvp.Value;
+    #if UNITY_EDITOR
+            var prefabSource = PrefabUtility.GetCorrespondingObjectFromSource(obj);
+    #else
+            var prefabSource = obj; // fallback
+    #endif
+            int prefabIndex = System.Array.IndexOf(config.prefabs, prefabSource);
+            if (prefabIndex < 0) continue;
+
+            saveData.objects.Add(new PlacedObjectData
+            {
+                cell = kvp.Key,
+                prefabIndex = prefabIndex,
+                rotation = obj.transform.rotation.eulerAngles,
+                scale = obj.transform.localScale
+            });
+        }
+
+        data.layers[config.layerName] = saveData;
+
+        await saveService.SaveAsync(key, data);
+    }
+
+
+    public async UniTask LoadAsync(ISaveService saveService, SaveType key)
+{
+    var data = await saveService.LoadAsync<GridLayeredSaveData>(key);
+    if (data == null || !data.layers.TryGetValue(config.layerName, out var layerData)) return;
+
+    // Clear old
+    foreach (var go in placedObjects.Values)
+        DestroyImmediate(go);
+    placedObjects.Clear();
+
+    foreach (var entry in layerData.objects)
+    {
+        var prefab = config.prefabs[entry.prefabIndex];
+#if UNITY_EDITOR
+        var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, transform);
+#else
+        var go = Instantiate(prefab, transform);
+#endif
+        float height = GetPrefabHeight(prefab);
+        go.transform.position = GetWorldFromCell(entry.cell) + Vector3.up * (height / 2f);
+        go.transform.rotation = Quaternion.Euler(entry.rotation);
+        go.transform.localScale = entry.scale;
+
+        placedObjects[entry.cell] = go;
+    }
+}
+
+
 }
