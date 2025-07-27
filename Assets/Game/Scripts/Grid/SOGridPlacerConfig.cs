@@ -5,15 +5,13 @@ public class SOGridPlacerConfig : ScriptableObject
 {
     public string layerName = "default"; // Add this at the top
 
-    public bool useRandom = true;
-    public int selectedIndex = 0;
+    [HideInInspector] public int selectedIndex = 0;
     public GameObject[] prefabs;
     public float cellSize = 1f;
     public bool RandomYRotation = true;
     public float ScaleMin = 1f;
     public float ScaleMax = 1f;
-    [Header("Placement Settings")]
-    public float placementYOffset = 0.5f;
+    [Header("Placement Settings")] public float placementYOffset = 0.5f;
 
 
     public GameObject GetRandomPrefab()
@@ -25,7 +23,6 @@ public class SOGridPlacerConfig : ScriptableObject
     public GameObject GetSelectedPrefab()
     {
         if (prefabs == null || prefabs.Length == 0) return null;
-        if (useRandom) return GetRandomPrefab();
         if (selectedIndex < 0 || selectedIndex >= prefabs.Length) return null;
         return prefabs[selectedIndex];
     }

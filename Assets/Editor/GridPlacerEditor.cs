@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -28,7 +29,7 @@ public class GridPlacerEditor : Editor
                 DestroyImmediate(child.gameObject);
         }
 
-         EditorGUILayout.Space();
+        EditorGUILayout.Space();
         EditorGUILayout.LabelField("Show / Hide Grid", EditorStyles.boldLabel);
 
         // Show grid toggle button
@@ -56,6 +57,24 @@ public class GridPlacerEditor : Editor
             var saveService = new BinarySaveService();
             _placer.LoadAsync(saveService, SaveType.GridPlacer);
         }
+        
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Layer Management", EditorStyles.boldLabel);
+
+        List<SOGridPlacerConfig> allConfigs = GetAllConfigs();
+        string[] layerNames = allConfigs.ConvertAll(c => c.layerName).ToArray();
+
+        int selected = allConfigs.IndexOf(_placer.Config);
+        int newSelected = EditorGUILayout.Popup("Active Layer", selected, layerNames);
+
+        if (newSelected != selected && newSelected >= 0)
+        {
+            Undo.RecordObject(_placer, "Switch Grid Layer");
+            typeof(GridPlacer).GetField("config", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .SetValue(_placer, allConfigs[newSelected]);
+            EditorUtility.SetDirty(_placer);
+        }
+
     }
 
     private void OnSceneGUI()
@@ -104,6 +123,23 @@ public class GridPlacerEditor : Editor
             }
 
         }
+    }
+
+    private List<SOGridPlacerConfig> GetAllConfigs()
+    {   
+        #if UNITY_EDITOR
+            string[] guids = AssetDatabase.FindAssets("t:SOGridPlacerConfig");
+            List<SOGridPlacerConfig> configs = new();
+            foreach (var guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var cfg = AssetDatabase.LoadAssetAtPath<SOGridPlacerConfig>(path);
+                if (cfg != null) configs.Add(cfg);
+            }
+            return configs;
+        #else
+            return new List<SOGridPlacerConfig>();
+        #endif
     }
 
     private void DrawGrid(Vector3Int centerCell)

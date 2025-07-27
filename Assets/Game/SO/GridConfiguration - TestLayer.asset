@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7d23ba733ad7a048a5d4d934ecac3fc, type: 3}
+  m_Name: GridConfiguration - TestLayer
+  m_EditorClassIdentifier: 
+  layerName: test
+  selectedIndex: 0
+  prefabs:
+  - {fileID: 1485344814862187683, guid: fd3e7278d157a8b4bbcc550ccc7196fe, type: 3}
+  - {fileID: 2953917503087334603, guid: 171d3073b1e93db41846291a86224eeb, type: 3}
+  - {fileID: 5436699335196124935, guid: d98d748c90504194688ae6f5c64a2175, type: 3}
+  - {fileID: 2960539394364825176, guid: dab580081b4447d4b8a475193aa70fa4, type: 3}
+  cellSize: 1
+  RandomYRotation: 1
+  ScaleMin: 1
+  ScaleMax: 1
+  placementYOffset: 0.5

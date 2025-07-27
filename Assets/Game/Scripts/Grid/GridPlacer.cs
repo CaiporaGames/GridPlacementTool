@@ -18,10 +18,6 @@ public class GridPlacer : MonoBehaviour
     private Dictionary<Vector3Int, GameObject> placedObjects = new();
     private GameObject prefab;
 
-    public bool HasObjectAt(Vector3Int cell)
-    {
-        return placedObjects.ContainsKey(cell);
-    }
 
     public void Place(Vector3 worldPos)
     {
@@ -169,16 +165,22 @@ public class GridPlacer : MonoBehaviour
 
     public async UniTask SaveAsync(ISaveService saveService, SaveType key)
     {
-        var data = new GridLayeredSaveData();
+        // Step 1: Load existing save file if it exists
+        GridLayeredSaveData allData = await saveService.LoadAsync<GridLayeredSaveData>(key);
+        if (allData == null)
+            allData = new GridLayeredSaveData();
+
+        // Step 2: Generate this layer's data
         var saveData = new GridPlacerSaveData();
 
         foreach (var kvp in placedObjects)
         {
             var obj = kvp.Value;
+            if (obj == null) continue;
     #if UNITY_EDITOR
             var prefabSource = PrefabUtility.GetCorrespondingObjectFromSource(obj);
     #else
-            var prefabSource = obj; // fallback
+            var prefabSource = obj;
     #endif
             int prefabIndex = System.Array.IndexOf(config.prefabs, prefabSource);
             if (prefabIndex < 0) continue;
@@ -192,38 +194,39 @@ public class GridPlacer : MonoBehaviour
             });
         }
 
-        data.layers[config.layerName] = saveData;
+        // Step 3: Replace or add this layer into the full save
+        allData.layers[config.layerName] = saveData;
 
-        await saveService.SaveAsync(key, data);
+        // Step 4: Save the full structure back
+        await saveService.SaveAsync(key, allData);
     }
+
 
 
     public async UniTask LoadAsync(ISaveService saveService, SaveType key)
-{
-    var data = await saveService.LoadAsync<GridLayeredSaveData>(key);
-    if (data == null || !data.layers.TryGetValue(config.layerName, out var layerData)) return;
-
-    // Clear old
-    foreach (var go in placedObjects.Values)
-        DestroyImmediate(go);
-    placedObjects.Clear();
-
-    foreach (var entry in layerData.objects)
     {
-        var prefab = config.prefabs[entry.prefabIndex];
-#if UNITY_EDITOR
-        var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, transform);
-#else
-        var go = Instantiate(prefab, transform);
-#endif
-        float height = GetPrefabHeight(prefab);
-        go.transform.position = GetWorldFromCell(entry.cell) + Vector3.up * (height / 2f);
-        go.transform.rotation = Quaternion.Euler(entry.rotation);
-        go.transform.localScale = entry.scale;
+        var data = await saveService.LoadAsync<GridLayeredSaveData>(key);
+        if (data == null || !data.layers.TryGetValue(config.layerName, out var layerData)) return;
 
-        placedObjects[entry.cell] = go;
+        // Clear old
+        foreach (var go in placedObjects.Values)
+            DestroyImmediate(go);
+        placedObjects.Clear();
+
+        foreach (var entry in layerData.objects)
+        {
+            var prefab = config.prefabs[entry.prefabIndex];
+    #if UNITY_EDITOR
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, transform);
+    #else
+            var go = Instantiate(prefab, transform);
+    #endif
+            float height = GetPrefabHeight(prefab);
+            go.transform.position = GetWorldFromCell(entry.cell) + Vector3.up * (height / 2f);
+            go.transform.rotation = Quaternion.Euler(entry.rotation);
+            go.transform.localScale = entry.scale;
+
+            placedObjects[entry.cell] = go;
+        }
     }
-}
-
-
 }

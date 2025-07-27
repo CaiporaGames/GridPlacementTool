@@ -20,7 +20,6 @@ public class PrefabPaletteWindow : EditorWindow
         if (config == null) return;
 
         useRandom = EditorGUILayout.Toggle("Random Selection", useRandom);
-        config.useRandom = useRandom;
         GridPlacerEditorState.useRandom = useRandom;
         
         EditorGUILayout.Space(5);

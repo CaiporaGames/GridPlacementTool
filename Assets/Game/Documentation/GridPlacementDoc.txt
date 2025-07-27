@@ -17,3 +17,10 @@ You can expand the tool to make it have another behaviors in the future.
 
 - If you want to select which prefab you need or if they should be random, you go to the tab: tools > grid placer > prefab pallete.
 - You can set it to random select an prefab when you are placing GO prefabs, or you can select the specific GO prefab.
+
++ Save/ Load
+
+- Each SO will be a layer. It will hold the GO prefabs per layers. 
+- Layer name is the SO prefab name.
+- When saving or loading we just need to select the layer in the GridPlacer script.
+Doing this we save and load the GO prefabs by layer, like: trees, rocks, ...
